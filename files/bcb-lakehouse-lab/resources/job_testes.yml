@@ -1,0 +1,9 @@
+# Job de testes (Exame S5): executa pytest dentro do Databricks (serverless).
+resources:
+  jobs:
+    job_testes:
+      name: ${bundle.name}-testes-${bundle.target}
+      tasks:
+        - task_key: pytest
+          notebook_task:
+            notebook_path: ../tests/run_tests.py

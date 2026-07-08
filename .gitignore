@@ -1,0 +1,15 @@
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
+# Databricks
+.databricks/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# OS
+.DS_Store

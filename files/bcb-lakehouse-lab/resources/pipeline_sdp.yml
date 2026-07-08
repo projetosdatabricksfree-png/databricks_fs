@@ -1,0 +1,31 @@
+# Pipeline Lakeflow Spark Declarative Pipelines (SDP) — Bronze → Silver → Gold
+# Exame S3. O código publica em múltiplos schemas usando nomes qualificados
+# com parâmetros ${...} definidos em `configuration` (substituídos no SQL/lidos
+# via spark.conf no Python).
+resources:
+  pipelines:
+    pipeline_sdp_bcb:
+      name: ${bundle.name}-sdp-${bundle.target}
+      serverless: true
+      continuous: false          # triggered: processa o disponível e para (exame!)
+      development: true          # dev mode: compute persiste p/ reuso entre updates;
+                                 # em produção real, mude para false (encerra ao final)
+      catalog: ${var.catalog}
+      schema: ${var.env_prefix}_silver
+      configuration:
+        catalog: ${var.catalog}
+        schema_bronze: ${var.env_prefix}_bronze
+        schema_silver: ${var.env_prefix}_silver
+        schema_gold: ${var.env_prefix}_gold
+        volume_landing: /Volumes/${var.catalog}/${var.env_prefix}_bronze/landing
+      libraries:
+        - file:
+            path: ../src/pipelines/sdp/01_bronze.sql
+        - file:
+            path: ../src/pipelines/sdp/02_silver.sql
+        - file:
+            path: ../src/pipelines/sdp/03_gold.sql
+        - file:
+            path: ../src/pipelines/sdp/04_cdc_scd2_clientes.sql
+        - file:
+            path: ../src/pipelines/sdp/05_bronze_expectativas.py

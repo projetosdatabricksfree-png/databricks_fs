@@ -1,0 +1,12 @@
+# Job utilitário: cria schemas, volumes e dados-semente. Rode uma vez por target.
+resources:
+  jobs:
+    job_setup:
+      name: ${bundle.name}-setup-${bundle.target}
+      tasks:
+        - task_key: setup_uc
+          notebook_task:
+            notebook_path: ../src/setup/00_setup.py
+            base_parameters:
+              catalog: ${var.catalog}
+              env_prefix: ${var.env_prefix}

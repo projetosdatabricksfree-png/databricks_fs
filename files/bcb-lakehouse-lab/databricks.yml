@@ -1,0 +1,36 @@
+# =============================================================================
+# Databricks Asset Bundle (DAB) — raiz do projeto
+# Exame S5: estrutura do bundle, variables, targets e overrides por ambiente.
+# Docs: https://docs.databricks.com/aws/en/dev-tools/bundles/
+# =============================================================================
+bundle:
+  name: bcb-lakehouse-lab
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Catálogo Unity Catalog alvo (no Free Edition use "workspace")
+    default: workspace
+  env_prefix:
+    description: Prefixo dos schemas — isola ambientes dentro do mesmo catálogo
+    default: bcb_dev
+  series_sgs:
+    description: Séries SGS ingeridas pelo for_each (JSON)
+    default: '[{"codigo":"1","nome":"dolar_venda"},{"codigo":"11","nome":"selic_diaria"},{"codigo":"433","nome":"ipca_mensal"}]'
+
+targets:
+  # mode development: prefixa recursos com [dev <user>], pausa schedules/triggers
+  # e permite iterar sem afetar produção — comportamento cobrado no exame.
+  dev:
+    mode: development
+    default: true
+
+  # mode production: sem prefixos, schedules ativos, validações extras de deploy.
+  prod:
+    mode: production
+    variables:
+      env_prefix: bcb
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}

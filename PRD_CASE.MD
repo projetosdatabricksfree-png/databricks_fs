@@ -1,0 +1,10 @@
+- Arquitetura de Dados: Definir e evoluir a arquitetura de dados corporativa, estabelecendo padrões e boas práticas para armazenamento, processamento e consumo de dados. 
+- - Desenvolvimento de Soluções: Projetar e implementar soluções de dados utilizando Databricks, garantindo escalabilidade, confiabilidade e performance. 
+- - Engenharia de Dados: Construir e manter pipelines de ingestão, transformação e disponibilização de dados para diferentes áreas da organização. 
+- - Estruturação de Ambientes Analíticos: Projetar e administrar Data Lakes, Lakehouses e camadas analíticas, assegurando organização e eficiência no acesso às informações. 
+- - Governança e Qualidade de Dados: Garantir a qualidade, rastreabilidade, governança e segurança dos dados, seguindo políticas e normas corporativas. 
+- - Performance e Otimização: Monitorar e otimizar custos e desempenho dos ambientes de processamento de dados, promovendo maior eficiência operacional. 
+- - Suporte às Iniciativas Analíticas: Apoiar projetos de Analytics, Business Intelligence, Ciência de Dados e Inteligência Artificial, disponibilizando dados confiáveis e estruturados. 
+- - Padronização e Observabilidade: Definir padrões de desenvolvimento, documentação, monitoramento e observabilidade das soluções de dados. 
+- - Referência Técnica: Atuar como referência técnica para a equipe de dados, orientando boas práticas, arquitetura e resolução de desafios técnicos. 
+- - Colaboração com o Negócio: Trabalhar em conjunto com as áreas de negócio para compreender necessidades e transformá-las em soluções de dados escaláveis, sustentáveis e alinhadas aos objetivos estratégicos da organização.

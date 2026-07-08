@@ -1,0 +1,58 @@
+# Job orientado a dados (data-driven). Exame S4: file arrival trigger,
+# pipeline_task, task values + condition_task (if/else) e ramificação.
+resources:
+  jobs:
+    job_orquestracao:
+      name: ${bundle.name}-orquestracao-${bundle.target}
+      # Dispara quando chegam arquivos na landing zone (alternativa ao cron).
+      trigger:
+        file_arrival:
+          url: /Volumes/${var.catalog}/${var.env_prefix}_bronze/landing/
+          min_time_between_triggers_seconds: 60
+        pause_status: UNPAUSED
+      # Alternativa data-driven (S4): disparar quando tabelas forem atualizadas.
+      # trigger:
+      #   table_update:
+      #     table_names:
+      #       - ${var.catalog}.${var.env_prefix}_silver.sgs_observacoes
+      #     condition: ALL_UPDATED
+      tasks:
+        - task_key: pipeline_medallion
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.pipeline_sdp_bcb.id}
+            full_refresh: false
+
+        - task_key: auditoria_qualidade
+          depends_on:
+            - task_key: pipeline_medallion
+          notebook_task:
+            notebook_path: ../src/notebooks/06_auditoria_qualidade.py
+            base_parameters:
+              catalog: ${var.catalog}
+              env_prefix: ${var.env_prefix}
+              pipeline_id: ${resources.pipelines.pipeline_sdp_bcb.id}
+
+        - task_key: qualidade_ok
+          depends_on:
+            - task_key: auditoria_qualidade
+          condition_task:
+            op: EQUAL_TO
+            left: "{{tasks.auditoria_qualidade.values.status_qualidade}}"
+            right: "OK"
+
+        - task_key: publicar_gold
+          depends_on:
+            - task_key: qualidade_ok
+              outcome: "true"
+          notebook_task:
+            notebook_path: ../src/notebooks/07_publicar_gold.py
+            base_parameters:
+              catalog: ${var.catalog}
+              env_prefix: ${var.env_prefix}
+
+        - task_key: alerta_qualidade
+          depends_on:
+            - task_key: qualidade_ok
+              outcome: "false"
+          notebook_task:
+            notebook_path: ../src/notebooks/08_alerta_qualidade.py

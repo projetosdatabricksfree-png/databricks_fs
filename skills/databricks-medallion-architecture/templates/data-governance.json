@@ -1,0 +1,356 @@
+{
+  "governance_framework": {
+    "catalog_name": "data_platform",
+    "description": "Unity Catalog governance structure for medallion architecture",
+    "version": "1.0.0",
+    "last_updated": "2026-04-27"
+  },
+  
+  "schemas": {
+    "bronze": {
+      "description": "Raw data ingestion layer - data engineers only",
+      "owner": "data_engineering",
+      "tables": {
+        "raw_events": {
+          "classification": "bronze",
+          "pii_fields": ["user_id", "ip_address"],
+          "retention_days": 90,
+          "access_policy": {
+            "read": ["data_engineers"],
+            "write": ["data_engineers"],
+            "deny": ["analysts", "bi_users"]
+          }
+        },
+        "raw_customers": {
+          "classification": "bronze",
+          "pii_fields": ["email", "phone", "ssn"],
+          "retention_days": 90,
+          "access_policy": {
+            "read": ["data_engineers", "dq_team"],
+            "write": ["data_engineers"],
+            "deny": ["external_users"]
+          }
+        }
+      }
+    },
+    
+    "silver": {
+      "description": "Validated, deduplicated data - analytics engineers and domain teams",
+      "owner": "analytics_engineering",
+      "tables": {
+        "customers_unified": {
+          "classification": "silver",
+          "pii_fields": ["email", "phone"],
+          "retention_days": 730,
+          "masking_required": true,
+          "access_policy": {
+            "read": ["analytics_engineers", "domain_teams"],
+            "write": ["analytics_engineers"],
+            "admin": ["data_architects"]
+          },
+          "row_level_security": {
+            "enabled": true,
+            "filter_column": "domain_code",
+            "rules": [
+              {
+                "role": "marketing_team",
+                "filter": "domain_code IN ('marketing', 'product')"
+              },
+              {
+                "role": "finance_team",
+                "filter": "domain_code IN ('finance', 'accounting')"
+              }
+            ]
+          }
+        },
+        "events_validated": {
+          "classification": "silver",
+          "pii_fields": ["user_id"],
+          "retention_days": 730,
+          "access_policy": {
+            "read": ["analytics_engineers", "data_scientists"],
+            "write": ["analytics_engineers"]
+          }
+        }
+      }
+    },
+    
+    "gold": {
+      "description": "Analytics-ready aggregated data - all authorized users",
+      "owner": "analytics_center_of_excellence",
+      "tables": {
+        "daily_revenue_by_product": {
+          "classification": "public",
+          "pii_fields": [],
+          "retention_days": -1,
+          "grain": "product_day",
+          "access_policy": {
+            "read": ["analysts", "bi_users", "executives"],
+            "write": ["analytics_engineers"],
+            "admin": ["analytics_coe"]
+          }
+        },
+        "customer_lifetime_value": {
+          "classification": "confidential",
+          "pii_fields": ["customer_id"],
+          "retention_days": -1,
+          "access_policy": {
+            "read": ["finance_team", "executives"],
+            "write": ["analytics_engineers"]
+          }
+        },
+        "dim_customer": {
+          "classification": "silver",
+          "pii_fields": ["email", "phone"],
+          "retention_days": -1,
+          "table_type": "conformed_dimension",
+          "access_policy": {
+            "read": ["analytics_engineers", "bi_tools"],
+            "write": ["analytics_engineers"]
+          }
+        },
+        "fact_orders": {
+          "classification": "silver",
+          "pii_fields": [],
+          "retention_days": -1,
+          "table_type": "fact_table",
+          "grain": "order_line_item",
+          "access_policy": {
+            "read": ["analytics_engineers", "data_scientists"],
+            "write": ["analytics_engineers"]
+          }
+        }
+      }
+    }
+  },
+  
+  "roles_and_permissions": {
+    "data_engineers": {
+      "description": "Build and maintain medallion pipelines",
+      "permissions": [
+        "bronze.*:READ,WRITE",
+        "silver.*:READ",
+        "unity_catalog:MANAGE",
+        "execute_jobs:ALL"
+      ]
+    },
+    "analytics_engineers": {
+      "description": "Develop silver and gold transformations",
+      "permissions": [
+        "bronze.*:READ",
+        "silver.*:READ,WRITE",
+        "gold.*:READ,WRITE",
+        "execute_jobs:ALL"
+      ]
+    },
+    "analysts": {
+      "description": "Access gold layer data for analysis",
+      "permissions": [
+        "gold.*:READ",
+        "silver.customers_unified:READ (with RLS)"
+      ]
+    },
+    "bi_users": {
+      "description": "Self-service analytics via BI tools",
+      "permissions": [
+        "gold.daily_revenue_by_product:READ",
+        "gold.dim_customer:READ",
+        "gold.fact_orders:READ"
+      ]
+    },
+    "data_scientists": {
+      "description": "Access data for ML model development",
+      "permissions": [
+        "silver.*:READ",
+        "gold.fact_orders:READ",
+        "gold.customer_lifetime_value:READ"
+      ]
+    },
+    "dq_team": {
+      "description": "Monitor data quality metrics",
+      "permissions": [
+        "bronze.*:READ",
+        "monitoring.*:READ,WRITE"
+      ]
+    }
+  },
+  
+  "data_classification": {
+    "public": {
+      "description": "No sensitive data; widely accessible",
+      "encryption": "optional",
+      "retention": "permanent",
+      "audit_logging": "optional",
+      "examples": ["fact_orders_aggregated", "product_catalog"]
+    },
+    "internal": {
+      "description": "Internal use only; non-public business data",
+      "encryption": "optional",
+      "retention": "2 years",
+      "audit_logging": "required",
+      "examples": ["gold.revenue_metrics", "silver.customer_segments"]
+    },
+    "confidential": {
+      "description": "Restricted access; business-sensitive or PII",
+      "encryption": "required",
+      "retention": "2 years minimum",
+      "audit_logging": "required",
+      "access_approval": "required",
+      "examples": ["silver.customers_unified", "gold.customer_lifetime_value"]
+    },
+    "restricted": {
+      "description": "Highly sensitive; PII, financial, or regulated data",
+      "encryption": "required_AES256",
+      "retention": "compliance_driven",
+      "audit_logging": "detailed",
+      "access_approval": "leadership_approval",
+      "examples": ["bronze.raw_customers", "ssn_hash", "payment_info"]
+    }
+  },
+  
+  "pii_handling": {
+    "sensitive_columns": {
+      "email": {
+        "classification": "pii",
+        "masking_method": "hash_sha256",
+        "retention_policy": "730_days",
+        "audit_required": true
+      },
+      "phone": {
+        "classification": "pii",
+        "masking_method": "redact_except_last_4",
+        "retention_policy": "730_days",
+        "audit_required": true
+      },
+      "ssn": {
+        "classification": "restricted_pii",
+        "masking_method": "hash_with_salt",
+        "retention_policy": "compliance_driven",
+        "encryption": "field_level_aes",
+        "audit_required": true
+      },
+      "ip_address": {
+        "classification": "pii",
+        "masking_method": "anonymize_subnet",
+        "retention_policy": "90_days",
+        "audit_required": false
+      }
+    },
+    "masking_rules": {
+      "hash_sha256": "SHA2(CONCAT(column, 'salt'), 256)",
+      "redact_except_last_4": "CONCAT(REPEAT('*', LENGTH(column)-4), SUBSTRING(column, -4))",
+      "anonymize_subnet": "REGEXP_REPLACE(ip_address, '\\\\.(\\\\d{1,3})$', '.0')"
+    }
+  },
+  
+  "lineage_and_metadata": {
+    "table_lineage": {
+      "bronze.raw_customers": {
+        "source": "oracle_crm_db",
+        "ingestion_type": "batch_daily",
+        "ingestion_frequency": "24h",
+        "latency_sla": "2h"
+      },
+      "silver.customers_unified": {
+        "source_tables": ["bronze.raw_customers", "bronze.raw_salesforce_contacts"],
+        "transformation_type": "merge_deduplicate",
+        "transformation_frequency": "hourly",
+        "data_quality_checks": ["completeness", "uniqueness", "validity"]
+      },
+      "gold.customer_lifetime_value": {
+        "source_tables": ["silver.customers_unified", "fact_orders"],
+        "transformation_type": "aggregation",
+        "aggregation_grain": "customer_lifetime",
+        "refresh_frequency": "daily"
+      }
+    },
+    "metadata_tags": {
+      "tags": [
+        {
+          "name": "domain",
+          "values": ["marketing", "finance", "operations", "product"]
+        },
+        {
+          "name": "tier",
+          "values": ["bronze", "silver", "gold"]
+        },
+        {
+          "name": "sensitivity",
+          "values": ["public", "internal", "confidential", "restricted"]
+        },
+        {
+          "name": "data_product",
+          "values": ["customer_analytics", "revenue_reporting", "product_insights"]
+        }
+      ],
+      "tagging_policy": {
+        "bronze_tables": ["domain", "tier"],
+        "silver_tables": ["domain", "tier", "sensitivity", "data_product"],
+        "gold_tables": ["domain", "tier", "sensitivity", "data_product"]
+      }
+    }
+  },
+  
+  "audit_and_compliance": {
+    "audit_logging": {
+      "enabled": true,
+      "log_read_access": "confidential_and_restricted_only",
+      "log_write_access": "all_tables",
+      "retention_days": 730,
+      "audit_table": "monitoring.access_audit_log"
+    },
+    "data_retention_policies": {
+      "bronze_default": 90,
+      "silver_default": 730,
+      "gold_default": -1,
+      "overrides": {
+        "raw_transactions": 1825,
+        "customer_profile_scd": -1
+      }
+    },
+    "compliance_frameworks": {
+      "gdpr": {
+        "description": "General Data Protection Regulation",
+        "applicable_tables": ["silver.customers_unified", "gold.customer_lifetime_value"],
+        "right_to_deletion": true,
+        "data_transfer_restrictions": true
+      },
+      "ccpa": {
+        "description": "California Consumer Privacy Act",
+        "applicable_tables": ["bronze.raw_customers", "silver.customers_unified"],
+        "opt_out_supported": true,
+        "data_sale_restrictions": true
+      },
+      "hipaa": {
+        "description": "Healthcare industry compliance",
+        "applicable_tables": [],
+        "field_level_encryption": true,
+        "audit_required": true
+      }
+    }
+  },
+  
+  "security_policies": {
+    "row_level_security": {
+      "enabled": true,
+      "implementation": "dynamic_sql_filtering",
+      "filter_source": "unity_catalog_tags"
+    },
+    "column_level_security": {
+      "enabled": true,
+      "redaction_enabled": true,
+      "sensitive_columns": ["email", "phone", "ssn", "ip_address"]
+    },
+    "encryption": {
+      "at_rest": {
+        "enabled": true,
+        "method": "azure_managed_keys",
+        "key_rotation_days": 90
+      },
+      "in_transit": {
+        "enabled": true,
+        "method": "tls_1_2_minimum"
+      }
+    }
+  }
+}

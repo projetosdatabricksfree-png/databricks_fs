@@ -1,0 +1,47 @@
+# Job de ingestão (time-based). Exame S4: agendamento cron, for_each (loop),
+# paralelismo controlado, retries por task e parâmetros de job.
+resources:
+  jobs:
+    job_ingestao:
+      name: ${bundle.name}-ingestao-${bundle.target}
+      parameters:
+        - name: dias_backfill
+          default: "30"
+      schedule:
+        quartz_cron_expression: "0 15 9 ? * MON-FRI"   # 09:15 em dias úteis
+        timezone_id: America/Sao_Paulo
+        pause_status: UNPAUSED    # em dev, o mode development pausa automaticamente
+      tasks:
+        # Loop for_each sobre a lista de séries SGS (S4: controle de fluxo)
+        - task_key: ingestao_sgs
+          for_each_task:
+            inputs: ${var.series_sgs}
+            concurrency: 3
+            task:
+              task_key: ingestao_sgs_iteracao
+              notebook_task:
+                notebook_path: ../src/ingestion/fetch_bcb_sgs.py
+                base_parameters:
+                  serie_codigo: "{{input.codigo}}"
+                  serie_nome: "{{input.nome}}"
+                  dias_backfill: "{{job.parameters.dias_backfill}}"
+                  catalog: ${var.catalog}
+                  env_prefix: ${var.env_prefix}
+              max_retries: 2
+              min_retry_interval_millis: 60000
+
+        - task_key: ingestao_expectativas
+          notebook_task:
+            notebook_path: ../src/ingestion/fetch_bcb_expectativas.py
+            base_parameters:
+              catalog: ${var.catalog}
+              env_prefix: ${var.env_prefix}
+          max_retries: 2
+          min_retry_interval_millis: 60000
+
+        - task_key: gera_cdc_clientes
+          notebook_task:
+            notebook_path: ../src/ingestion/gera_cdc_clientes.py
+            base_parameters:
+              catalog: ${var.catalog}
+              env_prefix: ${var.env_prefix}
