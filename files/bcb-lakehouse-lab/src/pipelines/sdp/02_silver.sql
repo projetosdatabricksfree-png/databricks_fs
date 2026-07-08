@@ -10,7 +10,10 @@
 CREATE OR REFRESH STREAMING TABLE ${catalog}.${schema_silver}.sgs_observacoes_stg (
   CONSTRAINT serie_presente  EXPECT (codigo_serie IS NOT NULL) ON VIOLATION FAIL UPDATE,
   CONSTRAINT valor_valido    EXPECT (valor IS NOT NULL AND valor >= 0) ON VIOLATION DROP ROW,
-  CONSTRAINT serie_catalogada EXPECT (codigo_serie IN (1, 11, 433))    -- warn (monitoria)
+  -- warn (monitoria): fonte da verdade das séries é var.series_sgs (databricks.yml).
+  -- Literal proposital: expectation WARN não bloqueia; parametrizar exigiria uma 2ª
+  -- lista de códigos (DAB não transforma o JSON de series_sgs), reintroduzindo drift.
+  CONSTRAINT serie_catalogada EXPECT (codigo_serie IN (1, 11, 433))
 )
 COMMENT 'Silver stg: observações SGS explodidas e tipadas (append; pode ter duplicatas)'
 TBLPROPERTIES ('quality' = 'silver')

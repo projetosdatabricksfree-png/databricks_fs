@@ -44,3 +44,14 @@ def test_deduplicar_por_chave_vence_maior_sequencia():
               {"k": 2, "v": "unico", "seq": 1}]
     out = {r["k"]: r["v"] for r in deduplicar_por_chave(linhas, ["k"], "seq")}
     assert out == {1: "novo", 2: "unico"}
+
+def test_deduplicar_por_chave_sequencia_ausente_nao_vence():
+    # Sequência None não pode vencer uma válida nem quebrar a comparação (ADR-002).
+    linhas = [{"k": 1, "v": "valido", "seq": 5},
+              {"k": 1, "v": "sem_seq", "seq": None}]
+    out = {r["k"]: r["v"] for r in deduplicar_por_chave(linhas, ["k"], "seq")}
+    assert out == {1: "valido"}
+    # Ambas None: mantém a primeira vista, sem lançar exceção.
+    ambas_none = [{"k": 9, "v": "a", "seq": None}, {"k": 9, "v": "b", "seq": None}]
+    out2 = {r["k"]: r["v"] for r in deduplicar_por_chave(ambas_none, ["k"], "seq")}
+    assert out2 == {9: "a"}

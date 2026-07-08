@@ -5,6 +5,8 @@ Manter lógica de negócio em funções puras permite testes unitários rápidos
 """
 from datetime import date, datetime
 
+# Espelha a expectation WARN `serie_catalogada` (02_silver.sql). Fonte da verdade
+# das séries é var.series_sgs (databricks.yml); literal mantido por ser check WARN.
 SERIES_CATALOGADAS = {1, 11, 433}
 
 
@@ -63,6 +65,13 @@ def deduplicar_por_chave(linhas, chave, sequencia):
     for linha in linhas or []:
         k = tuple(linha.get(c) for c in chave)
         atual = vencedores.get(k)
-        if atual is None or linha.get(sequencia) > atual.get(sequencia):
+        if atual is None:
+            vencedores[k] = linha
+            continue
+        seq_nova, seq_atual = linha.get(sequencia), atual.get(sequencia)
+        # Sequência ausente (None) nunca vence uma válida — espelha o requisito de
+        # SEQUENCE BY monótona por chave do AUTO CDC (ADR-002). Empate/ambas None:
+        # mantém a primeira vista (determinístico).
+        if seq_nova is not None and (seq_atual is None or seq_nova > seq_atual):
             vencedores[k] = linha
     return list(vencedores.values())
