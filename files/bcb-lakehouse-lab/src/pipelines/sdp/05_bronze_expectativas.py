@@ -21,6 +21,9 @@ def expectativas_raw():
     return (
         spark.readStream.format("cloudFiles")            # Auto Loader clássico
         .option("cloudFiles.format", "json")
+        # JSON no cloudFiles infere aninhados como STRING por padrão (inferColumnTypes=false);
+        # precisamos de payload como STRUCT para o explode(payload.value) na Silver.
+        .option("cloudFiles.inferColumnTypes", "true")
         .option("cloudFiles.schemaEvolutionMode", "addNewColumns")
         .load(f"{landing}/expectativas/")
         .select(

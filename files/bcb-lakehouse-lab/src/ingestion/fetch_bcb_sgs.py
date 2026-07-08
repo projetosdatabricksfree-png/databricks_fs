@@ -28,6 +28,10 @@ fim, ini = date.today(), date.today() - timedelta(days=dias)
 url = (f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados"
        f"?formato=json&dataInicial={ini:%d/%m/%Y}&dataFinal={fim:%d/%m/%Y}")
 resp = requests.get(url, timeout=30)
+# A API SGS responde 404 "Value(s) not found" quando NÃO há observação na janela
+# (comum em séries mensais como IPCA/433) — não é erro, é janela vazia. Trata como skip.
+if resp.status_code == 404:
+    dbutils.notebook.exit(f"Série {codigo}: janela sem observações (404 BCB) — nada a gravar.")
 resp.raise_for_status()
 observacoes = resp.json()  # [{"data": "01/07/2026", "valor": "..."}, ...]
 if not observacoes:
