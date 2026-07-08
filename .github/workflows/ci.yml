@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
 
+# O projeto vive num subdiretório; os passos `run` executam a partir daqui.
+# (Não afeta os passos `uses:` como checkout, que operam na raiz do repo.)
+defaults:
+  run:
+    working-directory: files/bcb-lakehouse-lab
+
 jobs:
   testes-unitarios:
     runs-on: ubuntu-latest
