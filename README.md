@@ -13,8 +13,8 @@ camada e entrega tabelas prontas para análise. Construído como **peça de port
 de dados** e como laboratório completo para a certificação
 *Databricks Certified Data Engineer Associate*.
 
-> **📂 O projeto vive em [`files/bcb-lakehouse-lab/`](files/bcb-lakehouse-lab/).**
-> Comece pelo **[README completo do projeto »](files/bcb-lakehouse-lab/README.md)** — visão de
+> **📂 O projeto vive em [`files/bcb-lakehouse-lab/`](https://github.com/projetosdatabricksfree-png/databricks_fs/tree/main/files/bcb-lakehouse-lab).**
+> Comece pelo **[README completo do projeto »](https://github.com/projetosdatabricksfree-png/databricks_fs/blob/main/files/bcb-lakehouse-lab/README.md)** — visão de
 > negócio, arquitetura detalhada, o porquê de cada etapa e o passo a passo de execução.
 
 ---
@@ -55,11 +55,11 @@ chegando na landing zone é o próprio gatilho, não um relógio.
 
 | Onde | O quê |
 |------|-------|
-| **[README completo »](files/bcb-lakehouse-lab/README.md)** | Documentação principal do projeto |
-| [`files/bcb-lakehouse-lab/src/`](files/bcb-lakehouse-lab/src/) | Ingestão, pipeline SDP (Bronze/Silver/Gold), notebooks, funções puras |
-| [`files/bcb-lakehouse-lab/resources/`](files/bcb-lakehouse-lab/resources/) | Jobs e pipeline declarados como IaC |
-| [`files/bcb-lakehouse-lab/docs/`](files/bcb-lakehouse-lab/docs/) | PRD · ROADMAP · ADRs · data-contracts · runbook |
-| [`files/bcb-lakehouse-lab/tests/`](files/bcb-lakehouse-lab/tests/) | Testes `pytest` (local + CI + workspace) |
+| **[README completo »](https://github.com/projetosdatabricksfree-png/databricks_fs/blob/main/files/bcb-lakehouse-lab/README.md)** | Documentação principal do projeto |
+| [`files/bcb-lakehouse-lab/src/`](https://github.com/projetosdatabricksfree-png/databricks_fs/tree/main/files/bcb-lakehouse-lab/src) | Ingestão, pipeline SDP (Bronze/Silver/Gold), notebooks, funções puras |
+| [`files/bcb-lakehouse-lab/resources/`](https://github.com/projetosdatabricksfree-png/databricks_fs/tree/main/files/bcb-lakehouse-lab/resources) | Jobs e pipeline declarados como IaC |
+| [`files/bcb-lakehouse-lab/docs/`](https://github.com/projetosdatabricksfree-png/databricks_fs/tree/main/files/bcb-lakehouse-lab/docs) | PRD · ROADMAP · ADRs · data-contracts · runbook |
+| [`files/bcb-lakehouse-lab/tests/`](https://github.com/projetosdatabricksfree-png/databricks_fs/tree/main/files/bcb-lakehouse-lab/tests) | Testes `pytest` (local + CI + workspace) |
 
 ## Execução rápida
 
@@ -71,4 +71,4 @@ databricks bundle deploy -t dev
 databricks bundle run job_setup -t dev      # cria schemas/volumes (1× por target)
 ```
 
-Passo a passo completo no **[README do projeto](files/bcb-lakehouse-lab/README.md#7-como-executar)**.
+Passo a passo completo no **[README do projeto](https://github.com/projetosdatabricksfree-png/databricks_fs/blob/main/files/bcb-lakehouse-lab/README.md#7-como-executar)**.
